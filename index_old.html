@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance between coordinates by LD</title> -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance Calculator for Coordinates - LD</title>
+    <meta name="description"
+        content="A fast and user-friendly web app for calculating distances between multiple coordinates, with map view. Ideal for developers and professionals needing quick calculations.">
+    <link rel="canonical" href="https://www.yourwebsite.com/">
+    <meta property="og:title" content="Distance Calculator for Coordinates - LD">
+    <meta property="og:description"
+        content="A user-friendly tool for developers and professionals for calculating distances between coordinates with map visualization.">
+    <meta property="og:url" content="https://www.yourwebsite.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://www.yourwebsite.com/images/preview.png">
+
+    <!-- MAP BOX -->
+    <!-- <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' /> -->
+
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script> -->
+    <script src="lib/geolib.js"></script>
+
+    <!-- <script defer data-domain="lukasdzn.github.io/distance-between-coordinates"
+        src="https://plausible.io/js/script.js"></script> -->
+
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        /* Header */
+        header {
+            background: #005f73;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        header p {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        /* Input Section */
+        #inputBox {
+            width: 100%;
+            height: 400px;
+            padding: 10px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        /* Results Section */
+        #results {
+            margin-top: 20px;
+        }
+
+        #results div {
+            background: #e9ecef;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .distance {
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        /* Map Section */
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #333;
+            color: #fff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <textarea id="inputBox" placeholder="Enter coordinates..."></textarea>
+    <div id="results"></div>
+
+    <div id='map' style='width: 400px; height: 300px;'></div>
+
+    <script>
+
+
+        // mapboxgl.accessToken = 'pk.eyJ1IjoibHVrYXNkem4iLCJhIjoiY2xwMDd5ancwMDV6aTJpbGcyb3gza3B2eCJ9.VjYnNOyvxKGmAqYp8QkZCg'
+        // mapboxgl.accessToken = 'pk.eyJ1IjoibHVrYXNkem4iLCJhIjoiY2xwMDdrM21uMDRxYjJwcXU5em85b3Z6NiJ9.ibBKh8ysh8MZD7e-TBocpg'
+        // var map = new mapboxgl.Map({
+        //     container: 'map',
+        //     style: 'mapbox://styles/mapbox/streets-v11'
+        // })
+
+        // 25.131347,55.185045
+        // 25.124087,55.2670
+        // 24.83249,52.4234
+        // 21.432087,55.8755
+        
+        // Define your three locations with longitude and latitude
+        // var location1 = [55.185045, 25.131347];
+
+        // // Create markers for each location
+        // var marker1 = new mapboxgl.Marker()
+        //     .setLngLat(location1)
+        //     .addTo(map);
+
+        // // Add zoom and rotation controls to the map.
+        // map.addControl(new mapboxgl.NavigationControl());
+
+        // // Zoom in on the pin
+        // map.flyTo({
+        //     center: location1,
+        //     zoom: 14
+        // });
+
+        // Create a GeoJSON feature collection for the locations.
+        // var geojson = {
+        //     type: 'FeatureCollection',
+        //     features: [{
+        //         type: 'Feature',
+        //         geometry: {
+        //             type: 'Point',
+        //             coordinates: location1
+        //         },
+        //         properties: {
+        //             title: 'Mapbox',
+        //             description: 'Washington, D.C.'
+        //         }
+        //     }]
+        // };
+
+        document.getElementById('inputBox').addEventListener('input', function () {
+            var input = this.value.split('\n')
+            var baseCoords = input[0].split(',')
+            var base = { latitude: parseFloat(baseCoords[0]), longitude: parseFloat(baseCoords[1]) }
+            var results = document.getElementById('results')
+            results.innerHTML = ''
+
+            for (var i = 1; i < input.length; i++) {
+                var coords = input[i].split(',')
+                var destination = { latitude: parseFloat(coords[0]), longitude: parseFloat(coords[1]) }
+                var distance = window.geolib.getPreciseDistance(base, destination)
+
+                var resultDiv = document.createElement('div')
+                resultDiv.innerHTML = 'From: ' + input[0] + ' To: ' + input[i] +
+                    ' <span class="distance">' + distance + ' meters</span>' +
+                    ' <button onclick="navigator.clipboard.writeText(\'' + distance + '\')">Copy</button>'
+                results.appendChild(resultDiv)
+            }
+
+            // Initialize and add the map
+            // var map = new google.maps.Map(document.getElementById('map'), {
+            //     zoom: 4,
+            //     center: base
+            // })
+
+            // // Add lines and markers
+            // input.slice(1).forEach(function (coord) {
+            //     var destCoords = coord.split(',')
+            //     var destLatLng = new google.maps.LatLng(parseFloat(destCoords[0]), parseFloat(destCoords[1]))
+
+            //     var marker = new google.maps.Marker({
+            //         position: destLatLng,
+            //         map: map
+            //     })
+
+            //     var line = new google.maps.Polyline({
+            //         path: [base, destLatLng],
+            //         geodesic: true,
+            //         strokeColor: '#FF0000',
+            //         strokeOpacity: 1.0,
+            //         strokeWeight: 2,
+            //         map: map
+            //     })
+            // })
+        });
+
+
+
+    </script>
+</body>
+
+</html>
