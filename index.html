@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance between coordinates by LD</title> -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance Calculator for Coordinates - LD</title>
+    <meta name="description" content="A fast and user-friendly web app for calculating distances between multiple coordinates, with map view. Ideal for developers and professionals needing quick calculations.">
+    <link rel="canonical" href="https://www.yourwebsite.com/">
+    <meta property="og:title" content="Distance Calculator for Coordinates - LD">
+    <meta property="og:description" content="A user-friendly tool for developers and professionals for calculating distances between coordinates with map visualization.">
+    <meta property="og:url" content="https://www.yourwebsite.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://www.yourwebsite.com/images/preview.png">
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+    <script src="lib/geolib.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #inputBox {
+            height: 400px;
+            width: 100%;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .distance {
+            font-weight: bold;
+            color: red;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <textarea id="inputBox" placeholder="Enter coordinates..."></textarea>
+    <div id="results"></div>
+    <div id="map"></div>
+    <script>
+        document.getElementById('inputBox').addEventListener('input', function () {
+            var input = this.value.split('\n')
+            var baseCoords = input[0].split(',')
+            var base = { latitude: parseFloat(baseCoords[0]), longitude: parseFloat(baseCoords[1]) }
+            var results = document.getElementById('results')
+            results.innerHTML = ''
+
+            for (var i = 1; i < input.length; i++) {
+                var coords = input[i].split(',')
+                var destination = { latitude: parseFloat(coords[0]), longitude: parseFloat(coords[1]) }
+                var distance = geolib.getPreciseDistance(base, destination)
+
+                var resultDiv = document.createElement('div')
+                resultDiv.innerHTML = 'From: ' + input[0] + ' To: ' + input[i] +
+                    ' <span class="distance">' + distance + ' meters</span>' +
+                    ' <button onclick="navigator.clipboard.writeText(\'' + distance + '\')">Copy</button>'
+                results.appendChild(resultDiv)
+            }
+
+            // Initialize and add the map
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 4,
+                center: base
+            })
+
+            // Add lines and markers
+            input.slice(1).forEach(function (coord) {
+                var destCoords = coord.split(',')
+                var destLatLng = new google.maps.LatLng(parseFloat(destCoords[0]), parseFloat(destCoords[1]))
+
+                var marker = new google.maps.Marker({
+                    position: destLatLng,
+                    map: map
+                })
+
+                var line = new google.maps.Polyline({
+                    path: [base, destLatLng],
+                    geodesic: true,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                    map: map
+                })
+            })
+        });
+
+    </script>
+</body>
+
+</html>
